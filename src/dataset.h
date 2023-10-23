@@ -31,7 +31,7 @@ typedef enum {
  * @param[in,out] stream Source to read from
  * @return Dataset read from source
  */
-Dataset dataset_read(FILE *stream);
+Dataset dataset_read(FILE *stream, int index_instance_to_verify);
 
 
 /**

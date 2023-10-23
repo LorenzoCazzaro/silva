@@ -110,31 +110,18 @@ static void parse_header(
  * @param[in,out] stream Stream
  * @return Dataset
  */
-static Dataset dataset_read_csv(FILE *stream) {
+static Dataset dataset_read_csv(FILE *stream,  int index_instance_to_verify) {
     char *labels;
     double *data;
     Dataset dataset;
     unsigned int n_cols, n_rows, i, j, result;
     DatasetFormat format;
 
-
     parse_header(&format, &n_rows, &n_cols, stream);
+    n_rows = index_instance_to_verify == -1 ? n_rows : 1;
 
     labels = (char *) malloc(LABEL_BUFFER_SIZE * n_rows * sizeof(char));
     data = (double *) malloc(n_rows * n_cols * sizeof(double));
-
-    for (i = 0; i < n_rows; ++i) {
-        double buffer;
-        memset(labels + i * LABEL_BUFFER_SIZE, 0, LABEL_BUFFER_SIZE * sizeof(char));
-        result = fscanf(stream, "\n%[^,],", labels + (i * LABEL_BUFFER_SIZE));
-        for (j = 0; j < n_cols - 1; ++j) {
-            result = fscanf(stream, "%lf,", &buffer);
-            data[i * n_cols + j] = buffer;
-        }
-
-        result = fscanf(stream, "%lf", &buffer);
-        data[i * n_cols + j] = buffer;
-    }
 
     dataset = (Dataset) malloc(sizeof(struct dataset));
     if (!dataset) {
@@ -142,6 +129,40 @@ static Dataset dataset_read_csv(FILE *stream) {
         abort();
     }
 
+    if (index_instance_to_verify == -1) {
+        for (i = 0; i < n_rows; ++i) {
+            double buffer;
+            memset(labels + i * LABEL_BUFFER_SIZE, 0, LABEL_BUFFER_SIZE * sizeof(char));
+            result = fscanf(stream, "\n%[^,],", labels + (i * LABEL_BUFFER_SIZE));
+            for (j = 0; j < n_cols - 1; ++j) {
+                result = fscanf(stream, "%lf,", &buffer);
+                data[i * n_cols + j] = buffer;
+            }
+
+            result = fscanf(stream, "%lf", &buffer);
+            data[i * n_cols + j] = buffer;
+        }
+    } else {
+        for (i = 0; i < index_instance_to_verify; ++i) {
+            fscanf(stream, "%*[^\n]\n");
+        }
+        double buffer;
+        memset(labels, 0, LABEL_BUFFER_SIZE * sizeof(char));
+        result = fscanf(stream, "\n%[^,],", labels);
+        for (j = 0; j < n_cols - 1; ++j) {
+            result = fscanf(stream, "%lf,", &buffer);
+            data[j] = buffer;
+        }
+
+        result = fscanf(stream, "%lf", &buffer);
+        data[j] = buffer;
+
+        /*printf("Data: ");
+        for (j = 0; j < n_cols - 1; ++j) {
+            printf("%f, ", data[j]);
+        }*/
+    }
+    
     dataset->size = n_rows;
     dataset->space_size = n_cols;
     dataset->data = data;
@@ -246,7 +267,7 @@ static void dataset_write_binary(const Dataset dataset, FILE *stream) {
  * Public functions.
  **********************************************************************/
 
-Dataset dataset_read(FILE *stream) {
+Dataset dataset_read(FILE *stream, int index_instance_to_verify) {
     unsigned int n_rows, n_cols;
     DatasetFormat format;
     long initial_position;
@@ -260,9 +281,22 @@ Dataset dataset_read(FILE *stream) {
     parse_header(&format, &n_rows, &n_cols, stream);
     fseek(stream, initial_position, SEEK_SET);
 
+    printf("Index of instance to verify %d\n", index_instance_to_verify);
+    printf("n_rows %d\n", n_rows);
+    printf("%d\n", index_instance_to_verify >= n_rows);
+    if (index_instance_to_verify < 0) {
+        if(index_instance_to_verify != -1) {
+            printf("Index of the instance to verify cannot be outside the number of rows of the dataset!\n");
+            abort();
+        }
+    } else if (index_instance_to_verify >= n_rows) {
+        printf("Index of the instance to verify cannot be outside the number of rows of the dataset!\n");
+        abort();
+    }
+        
     switch (format) {
         case DATASET_CSV:
-            return dataset_read_csv(stream);
+            return dataset_read_csv(stream, index_instance_to_verify);
 
         case DATASET_BINARY:
             return dataset_read_binary(stream);
