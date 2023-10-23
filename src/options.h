@@ -27,6 +27,7 @@ struct options {
     char *dataset_path;                /**< Path to dataset file. */
     unsigned int max_print_length;     /**< Maximum number of characters to show
                                             for classifier and dataset paths. */
+    int index_instance_to_verify;      /**< Index of the instance of the test set to verify, -1 if all */
     ForestVotingScheme voting_scheme;  /**< Forest voting scheme. */
     AbstractDomain abstract_domain;    /**< Abstract domain to use for analysis. */
     Perturbation perturbation;         /**< Type of perturbation. */
