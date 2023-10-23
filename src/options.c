@@ -184,6 +184,7 @@ void options_read(Options *options, const int argc, const char *argv[]) {
     options->sample_timeout = SAMPLE_TIMEOUT;
     options->abstract_domain.type = DOMAIN_HYPERRECTANGLE;
     options->seed = SEED;
+    options->index_instance_to_verify = -1;
 
     for (i = 3; i < argc; ++i) {
         if (strcmp(argv[i], "--max-print-length") == 0 && i + 1 < argc) {
@@ -216,6 +217,9 @@ void options_read(Options *options, const int argc, const char *argv[]) {
         else if (strcmp(argv[i], "--seed") == 0 && i + 1 < argc) {
             ++i;
             sscanf(argv[i], "%u", &options->seed);
+        } else if (strcmp(argv[i], "--index-of-instance") == 0 && i + 1 < argc) {
+            ++i;
+            sscanf(argv[i], "%d", &options->index_instance_to_verify);
         }
     }
 
@@ -244,6 +248,7 @@ void display_help(const int argc, const char *argv[]) {
     printf("\t%-32s Tier list of features\n", "--tiers N VALUE...");
     printf("\t%-32s Maximum allowed execution time for each sample analysis, in seconds (default: %u)\n", "--sample-timeout VALUE", SAMPLE_TIMEOUT);
     printf("\t%-32s Seed to use for random number generation, reserved for future use (default: %u)\n", "--seed VALUE", SEED);
+    printf("\t%-32s Index of the instance in the dataset to verify (default: %d)\n", "--index-of-instance VALUE", -1);
     printf("\n");
 
     printf("Perturbation-specific options:\n");

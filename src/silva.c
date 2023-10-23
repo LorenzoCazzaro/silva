@@ -104,6 +104,8 @@ int main(const int argc, const char **argv) {
     /* Reads dataset */
     dataset_file = fopen(options.dataset_path, "r");
     dataset = dataset_read(dataset_file);
+    printf("Index of the instance to verify %d\n", options.index_instance_to_verify);
+    dataset = dataset_read(dataset_file, options.index_instance_to_verify);
     fclose(dataset_file);
 
 
